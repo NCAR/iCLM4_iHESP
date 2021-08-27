@@ -88,14 +88,6 @@ Number of  multiple elevation classes over glacier points.
 Normally this is ONLY used when running CESM with the active glacier model.
 </entry>
 
-<entry id="glc_smb" type="logical" category="clm_physics"
-       group="clm_inparm" valid_values="" >
-If TRUE, calculate surface mass balance for glacier multi-elevation class points.
-If false use growing degree day information for glaciers multi-elevation class points.
-Only works when glc_nec is greater than 0.
-(Only tested with glc_smb=.true., setting it to .false. is NOT tested)
-</entry>
-
 <entry id="glc_dyntopo" type="logical" category="clm_physics"
        group="clm_inparm" valid_values="" >
 If TRUE, dynamically change topographic height over glacier points.
@@ -686,7 +678,7 @@ CLM run type.
 <entry id="res" type="char*30" category="default_settings"
        group="default_settings"  
        valid_values=
-"512x1024,360x720cru,128x256,64x128,48x96,32x64,8x16,94x192,0.23x0.31,0.47x0.63,0.9x1.25,1.9x2.5,2.5x3.33,4x5,10x15,5x5_amazon,1x1_tropicAtl,1x1_camdenNJ,1x1_vancouverCAN,1x1_mexicocityMEX,1x1_asphaltjungleNJ,1x1_brazil,1x1_urbanc_alpha,1x1_numaIA,1x1_smallvilleIA,0.1x0.1,0.5x0.5,3x3min,5x5min,10x10min,0.33x0.33,ne4np4,ne16np4,ne30np4,ne60np4,ne120np4,ne240np4">
+"512x1024,360x720cru,128x256,64x128,48x96,32x64,8x16,94x192,0.23x0.31,0.47x0.63,0.9x1.25,1.9x2.5,2.5x3.33,4x5,10x15,5x5_amazon,1x1_camdenNJ,1x1_vancouverCAN,1x1_mexicocityMEX,1x1_asphaltjungleNJ,1x1_brazil,1x1_urbanc_alpha,1x1_numaIA,1x1_smallvilleIA,0.1x0.1,0.5x0.5,3x3min,5x5min,10x10min,0.33x0.33,ne4np4,ne16np4,ne30np4,ne60np4,ne120np4,ne240np4">
 Horizontal resolutions
 Note: 0.1x0.1, 0.5x0.5, 5x5min, 10x10min, 3x3min and 0.33x0.33 are only used for CLM tools
 </entry> 
@@ -700,13 +692,37 @@ Representative concentration pathway for future scenarios [radiative forcing at 
 
 <entry id="mask" type="char*10" category="default_settings"
        group="default_settings"  
-       valid_values="USGS,gx3v7,gx1v6,navy,test,tx0.1v2,tx1v1,T62,cruncep">
+       valid_values="USGS,gx3v7,gx1v6,gz1v7,navy,test,tx0.1v2,tx1v1,T62,cruncep">
 Land mask description
 </entry> 
+
+<entry id="clm_accelerated_spinup" type="char*3" category="default_settings"
+       group="default_settings" valid_values="on,off" >
+Command line argument for setting up your simulation in a mode for faster
+throughput. By default turns off some options, and sets up for a lower level
+of output. When bgc_mode is some level of prognostic BGC (so NOT Satellite Phenology)
+it also sets up for accelerated decomposition.
+NOTE: THIS CORRESPONDS DIRECTLY TO THE env_run.xml VARIABLE OF THE SAME NAME.
+      Set the env_run variable, rather than setting this directly.
+</entry>
+
+<entry id="lnd_tuning_mode" type="char*20" category="default_settings"
+       group="default_settings"
+       valid_values="clm4_0_default,clm4_0_CRUv7,clm4_0_GSWP3v1,clm4_0_cam6.0">
+General configuration of model version and atmospheric forcing to tune the model to run under.
+This sets the model to run with constants that were set to run well under the configuration
+of model version and atmospheric forcing. To run well constants would need to be changed
+to run with a different type of atmospheric forcing.
+</entry>
 
 <entry id="irrig" type="logical" category="default_settings"
        group="default_settings"  >
 If TRUE, irrigation will be active (find surface datasets with active irrigation).
+</entry> 
+
+<entry id="megan" type="integer" category="default_settings"
+       group="default_settings"  valid_values="0,1">
+If 1, turn on the MEGAN model for BVOC's (Biogenic Volitile Organic Compounds)
 </entry> 
 
 <entry id="sim_year" type="integer" category="default_settings"

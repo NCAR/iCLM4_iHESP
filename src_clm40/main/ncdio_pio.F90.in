@@ -24,7 +24,7 @@ module ncdio_pio
   use decompMod      , only : get_clmlevel_gsize,get_clmlevel_gsmap
   use perf_mod       , only : t_startf, t_stopf
   use fileutils      , only : getavu, relavu
-  use mct_mod        , only : mct_gsMap, mct_gsMap_lsize, mct_gsMap_gsize, mct_gsMap_OP
+  use mct_mod        , only : mct_gsMap, mct_gsMap_lsize, mct_gsMap_gsize, mct_gsMap_OrderedPoints
   use pio            , only : file_desc_t, io_desc_t, iosystem_desc_t, pio_64bit_offset
   use pio            , only : pio_bcast_error, pio_char, pio_clobber, pio_closefile, pio_createfile, pio_def_dim
   use pio            , only : pio_def_var, pio_double, pio_enddef, pio_get_att, pio_get_var, pio_global, pio_initdecomp
@@ -56,7 +56,7 @@ module ncdio_pio
   public :: ncd_inqdid         ! inquire dimension id
   public :: ncd_inqdname       ! inquire dimension name
   public :: ncd_inqdlen        ! inquire dimension length
-  public :: ncd_inqfdims       ! inquire file dimnesions 
+  public :: ncd_inqfdims       ! inquire file dimnesions
   public :: ncd_defvar         ! define variables
   public :: ncd_inqvid         ! inquire variable id
   public :: ncd_inqvname       ! inquire variable name
@@ -100,7 +100,7 @@ module ncdio_pio
      module procedure ncd_getatt_char
   end interface ncd_getatt
 
-  interface ncd_io 
+  interface ncd_io
      module procedure ncd_io_char_var0_start_glob
 
      !DIMS 0,1
@@ -137,7 +137,7 @@ module ncdio_pio
   real(r8), parameter  , public  :: fillvalue = 1.e36_r8     ! fill value for netcdf fields
 
   integer, public :: io_type
-
+  integer, private :: io_format
   type(iosystem_desc_t), pointer, public  :: pio_subsystem
 
   type iodesc_plus_type
@@ -146,7 +146,7 @@ module ncdio_pio
      integer           :: type
      integer           :: ndims
      integer           :: dims(4)
-     integer           :: dimids(4) 
+     integer           :: dimids(4)
   end type iodesc_plus_type
   integer,parameter      ,private :: max_iodesc = 100
   integer                ,private :: num_iodesc = 0
@@ -162,13 +162,13 @@ contains
     ! Initial PIO
     !
     ! !USES:
-    use shr_pio_mod     , only : shr_pio_getiosys, shr_pio_getiotype
+    use shr_pio_mod     , only : shr_pio_getiosys, shr_pio_getiotype, shr_pio_getioformat
     use clm_varctl      , only : inst_name
     !-----------------------------------------------------------------------
 
     PIO_subsystem => shr_pio_getiosys(inst_name)
     io_type       =  shr_pio_getiotype(inst_name)
-
+    io_format     =  shr_pio_getioformat(inst_name)
   end subroutine ncd_pio_init
 
   !-----------------------------------------------------------------------
@@ -184,8 +184,8 @@ contains
     !
     ! !LOCAL VARIABLES:
     integer :: ierr
-    !-----------------------------------------------------------------------
 
+    !-----------------------------------------------------------------------
     ierr = pio_openfile(pio_subsystem, file, io_type, fname, mode)
 
     if(ierr/= PIO_NOERR) then
@@ -211,20 +211,47 @@ contains
   end subroutine ncd_pio_closefile
 
   !-----------------------------------------------------------------------
-  subroutine ncd_pio_createfile(file, fname)
+  subroutine ncd_pio_createfile(file, fname, avoid_pnetcdf)
     !
     ! !DESCRIPTION:
     ! Create a new NetCDF file with PIO
     !
+    ! !USES:
+    use pio, only : pio_iotype_pnetcdf, pio_iotype_netcdf
+    !
     ! !ARGUMENTS:
     class(file_desc_t), intent(inout) :: file    ! PIO file descriptor
     character(len=*) ,  intent(in)    :: fname   ! File name to create
+
+    ! BUG(wjs, 2014-10-20, bugz 1730) Workaround for
+    ! http://bugs.cgd.ucar.edu/show_bug.cgi?id=1730
+    logical, intent(in), optional     :: avoid_pnetcdf
     !
     ! !LOCAL VARIABLES:
+    logical :: l_avoid_pnetcdf  ! local version of avoid_pnetcdf
+    integer :: my_io_type
     integer :: ierr
+
     !-----------------------------------------------------------------------
 
-    ierr = pio_createfile(pio_subsystem, file, io_type, fname, ior(PIO_CLOBBER,PIO_64BIT_OFFSET))
+    l_avoid_pnetcdf = .false.
+    if (present(avoid_pnetcdf)) then
+       l_avoid_pnetcdf = avoid_pnetcdf
+    end if
+
+    my_io_type = io_type
+    if (l_avoid_pnetcdf) then
+       if (my_io_type == pio_iotype_pnetcdf) then
+          my_io_type = pio_iotype_netcdf
+          if(pio_iotask_rank(pio_subsystem)==0) then
+             write(iulog,*) 'Workaround for bugz 1730: creating'
+             write(iulog,*) trim(fname)
+             write(iulog,*) 'with type netcdf instead of pnetcdf'
+          end if
+       end if
+    end if
+
+    ierr = pio_createfile(pio_subsystem, file, my_io_type, fname, ior(PIO_CLOBBER, io_format))
 
     if(ierr/= PIO_NOERR) then
        call shr_sys_abort( ' ncd_pio_createfile ERROR: Failed to open file to write: '//trim(fname))
@@ -292,7 +319,7 @@ contains
 
     character(len=*), parameter :: subname = 'check_att'
     !-----------------------------------------------------------------------
-    
+
     att_found = .true.
     call pio_seterrorhandling(ncid, PIO_BCAST_ERROR)
     status = PIO_inq_att(ncid, varid, trim(attrib), att_type, att_len)
@@ -316,7 +343,7 @@ contains
     !
     ! !LOCAL VARIABLES:
     integer :: dimid, dimlen    ! temporaries
-    integer :: status           ! error code      
+    integer :: status           ! error code
     character(len=*),parameter :: subname='check_dim' ! subroutine name
     !-----------------------------------------------------------------------
 
@@ -433,7 +460,7 @@ contains
     !
     ! !LOCAL VARIABLES:
     integer  :: dimid                                ! netCDF id
-    integer  :: ier                                  ! error status 
+    integer  :: ier                                  ! error status
     character(len=32) :: subname = 'ncd_inqfdims' ! subroutine name
     !-----------------------------------------------------------------------
 
@@ -757,10 +784,10 @@ contains
     !
     ! !LOCAL VARIABLES:
     integer :: status
-    
+
     character(len=*), parameter :: subname = 'ncd_getatt_char'
     !-----------------------------------------------------------------------
-    
+
     status = PIO_get_att(ncid,varid,trim(attrib),value)
 
   end subroutine ncd_getatt_char
@@ -818,7 +845,7 @@ contains
     integer :: n                   ! indices
     integer :: ldimid(4)           ! local dimid
     integer :: dimid0(1)           ! local dimid
-    integer :: status              ! error status 
+    integer :: status              ! error status
     integer :: lxtype              ! local external type (in case logical variable)
     type(var_desc_t)   :: vardesc  ! local vardesc
     character(len=128) :: dimname  ! temporary
@@ -849,7 +876,7 @@ contains
        write(iulog,*) subname//' ',trim(varname),lxtype,ndims,ldimid(1:ndims)
     endif
 
-    if (ndims >  0) then 
+    if (ndims >  0) then
        status = pio_inq_dimname(ncid,ldimid(ndims),dimname)
     end if
 
@@ -1027,7 +1054,7 @@ contains
        status = pio_get_var(ncid, vardesc, start, data )
 
     elseif (flag == 'write') then
-       
+
        status = pio_put_var(ncid, vardesc, start, data )
 
     endif
@@ -1075,7 +1102,7 @@ contains
                      errMsg(__FILE__, __LINE__))
              end if
           endif
-#if ({DIMS}==0) 
+#if ({DIMS}==0)
           status = pio_get_var(ncid, varid, idata)
           if ( idata == 0 )then
              data = .false.
@@ -1085,7 +1112,7 @@ contains
              call shr_sys_abort(' ERROR: bad integer value for logical data'//errMsg(__FILE__, __LINE__))
           end if
 #else
-          allocate(idata1d(size(data))) 
+          allocate(idata1d(size(data)))
           data = (idata1d == 1)
           if ( any(idata1d /= 0 .and. idata1d /= 1) )then
              call shr_sys_abort(' ERROR: read in bad integer value(s) for logical data'//errMsg(__FILE__, __LINE__))
@@ -1097,7 +1124,7 @@ contains
 
     elseif (flag == 'write') then
 
-#if ({DIMS}==0) 
+#if ({DIMS}==0)
        start(1) = 1 ; count(1) = 1
        if (present(nt)) start(1) = nt
        call ncd_inqvid  (ncid, varname, varid, vardesc)
@@ -1113,7 +1140,7 @@ contains
        start(1) = 1 ; count(1) = size(data)
        start(2) = 1 ; count(2) = 1
        if (present(nt)) start(2) = nt
-       allocate(idata1d(size(data))) 
+       allocate(idata1d(size(data)))
        where( data )
           idata1d = 1
        elsewhere
@@ -1131,7 +1158,7 @@ contains
   !------------------------------------------------------------------------
   !DIMS 0,1,2,3
   !TYPE int,double
-  subroutine ncd_io_{DIMS}d_{TYPE}_glob(varname, data, flag, ncid, readvar, nt, posNOTonfile) 
+  subroutine ncd_io_{DIMS}d_{TYPE}_glob(varname, data, flag, ncid, readvar, nt, posNOTonfile)
     !
     ! !DESCRIPTION:
     ! netcdf I/O of global variable
@@ -1167,7 +1194,7 @@ contains
 
        call ncd_inqvid(ncid, varname, varid, vardesc, readvar=varpresent)
 
-#if ({DIMS}==0) 
+#if ({DIMS}==0)
        if (varpresent) then
           status = pio_get_var(ncid, vardesc, data)
           if (single_column .and. present(posNOTonfile) ) then
@@ -1198,23 +1225,23 @@ contains
        ndims = {DIMS}
        if(present(nt)) ndims=ndims+1
        call ncd_inqvid  (ncid, varname, varid, vardesc)
-#if ({DIMS}==0) 
+#if ({DIMS}==0)
        start(1) = 1  ; count(1) = 1
        if (present(nt)) start(1) = nt ; count(1) = 1
        temp(1) = data
        status = pio_put_var(ncid, varid, start(1:1), count(1:1), temp)
-#elif ({DIMS}==1) 
-       start(1) = 1 ; count(1) = size(data) 
+#elif ({DIMS}==1)
+       start(1) = 1 ; count(1) = size(data)
        start(2) = 1 ; count(2) = 1
        if (present(nt)) start(2) = nt
        status = pio_put_var(ncid, varid, start(1:ndims), count(1:ndims), data)
-#elif ({DIMS}==2) 
+#elif ({DIMS}==2)
        start(1) = 1  ; count(1) = size(data, dim=1)
        start(2) = 1  ; count(2) = size(data, dim=2)
        start(3) = 1  ; count(3) = 1
-       if (present(nt)) start(3) = nt 
+       if (present(nt)) start(3) = nt
        status = pio_put_var(ncid, varid, start(1:ndims), count(1:ndims), data)
-#elif ({DIMS}==3) 
+#elif ({DIMS}==3)
        if (present(nt)) then
           start(1) = 1  ; count(1) = size(data,dim=1)
           start(2) = 1  ; count(2) = size(data,dim=2)
@@ -1256,7 +1283,7 @@ contains
     character(len=1)  :: tmpString(128)     ! temp for manipulating output string
     type(var_desc_t)  :: vardesc            ! local vardesc pointer
     character(len=*),parameter :: subname='ncd_io_{DIMS}d_{TYPE}_glob'
-    integer :: ndims 
+    integer :: ndims
    !-----------------------------------------------------------------------
 
     start(:) = 0
@@ -1277,7 +1304,7 @@ contains
        if(present(nt)) ndims=ndims+1
        call ncd_inqvid  (ncid, varname, varid, vardesc)
 
-#if ({DIMS}==0) 
+#if ({DIMS}==0)
        if (present(nt)) then
           do m = 1,len(data)
              tmpString(m:m) = data(m:m)
@@ -1291,7 +1318,7 @@ contains
        else
           status = pio_put_var(ncid, varid, data )
        end if
-#elif ({DIMS}==1) 
+#elif ({DIMS}==1)
        if (present(nt)) then
           start(1) = 1 ; count(1) = len(data)
           start(2) = 1 ; count(2) = size(data)
@@ -1300,10 +1327,10 @@ contains
        else
           status = pio_put_var(ncid, varid, data)
        end if
-#elif ({DIMS}==2) 
+#elif ({DIMS}==2)
        if (present(nt)) then
           start(1) = 1  ; count(1) = len(data)
-          start(2) = 1  ; count(2) = size(data,dim=1) 
+          start(2) = 1  ; count(2) = size(data,dim=1)
           start(3) = 1  ; count(3) = size(data,dim=2)
           start(4) = nt ; count(4) = 1
           status = pio_put_var(ncid, varid, start, count, data)
@@ -1314,7 +1341,7 @@ contains
 
     endif
 
-  end subroutine ncd_io_{DIMS}d_{TYPE}_glob 
+  end subroutine ncd_io_{DIMS}d_{TYPE}_glob
 
   !-----------------------------------------------------------------------
 
@@ -1322,7 +1349,7 @@ contains
   subroutine ncd_io_1d_{TYPE}(varname, data, dim1name, flag, ncid, nt, readvar, cnvrtnan2fill)
     !
     ! !DESCRIPTION:
-    ! netcdf I/O for 1d 
+    ! netcdf I/O for 1d
     !
     ! !ARGUMENTS:
     class(file_desc_t), intent(inout)        :: ncid          ! netcdf file id
@@ -1337,16 +1364,16 @@ contains
     ! Local Variables
     character(len=8)                 :: clmlevel   ! clmlevel
     character(len=32)                :: dimname    ! temporary
-    integer                          :: n          ! index      
+    integer                          :: n          ! index
     integer                          :: iodnum     ! iodesc num in list
     integer                          :: varid      ! varid
     integer                          :: ndims      ! ndims for var
     integer                          :: ndims_iod  ! ndims iodesc for var
-    integer                          :: dims(4)    ! dim sizes       
+    integer                          :: dims(4)    ! dim sizes
     integer                          :: dids(4)    ! dim ids
     integer                          :: start(3)   ! netcdf start index
     integer                          :: count(3)   ! netcdf count index
-    integer                          :: status     ! error code  
+    integer                          :: status     ! error code
     logical                          :: varpresent ! if true, variable is on tape
     integer                , pointer :: idata(:)   ! Temporary integer data to send to file
     integer               , pointer :: compDOF(:)
@@ -1364,7 +1391,7 @@ contains
        write(iulog,*) subname//' ',trim(flag),' ',trim(varname),' ',trim(clmlevel)
     end if
 
-#if ({ITYPE}==TYPEDOUBLE) 
+#if ({ITYPE}==TYPEDOUBLE)
     if ( present(cnvrtnan2fill) )then
        if (.not. cnvrtnan2fill) then
           call shr_sys_abort(' ERROR: cnvrtnan2fill present but NOT set to true -- MUST set it to TRUE if used'//&
@@ -1394,7 +1421,7 @@ contains
                 end if
              end if
 #if ({ITYPE}==TYPELOGICAL)
-             allocate(idata(size(data))) 
+             allocate(idata(size(data)))
              status = pio_get_var(ncid, varid, start(1:n), count(1:n), idata)
              data = (idata == 1)
              if ( any(idata /= 0 .and. idata /= 1) )then
@@ -1428,7 +1455,7 @@ contains
                 call pio_setframe(ncid, vardesc, int(nt,kind=Pio_Offset_Kind))
              end if
 #if ({ITYPE}==TYPELOGICAL)
-             allocate(idata(size(data))) 
+             allocate(idata(size(data)))
              call pio_read_darray(ncid, vardesc, iodesc_plus%iodesc, idata, status)
              data = (idata == 1)
              if ( any(idata /= 0 .and. idata /= 1) )then
@@ -1460,15 +1487,18 @@ contains
        call ncd_getiodesc(ncid, clmlevel, ndims_iod, dims(1:ndims_iod), dids(1:ndims_iod), &
             PIO_INT, iodnum)
 #else
+       if(debug > 1) print *,__FILE__,__LINE__
        call ncd_getiodesc(ncid, clmlevel, ndims_iod, dims(1:ndims_iod), dids(1:ndims_iod), &
             PIO_{TYPE}, iodnum)
 #endif
        iodesc_plus => iodesc_list(iodnum)
        if (present(nt)) then
+          if(debug > 1) print *,__FILE__,__LINE__,nt
           call pio_setframe(ncid, vardesc, int(nt,kind=Pio_Offset_Kind))
        end if
+       if(debug > 1) print *,__FILE__,__LINE__,trim(varname)
 #if ({ITYPE}==TYPELOGICAL)
-       allocate( idata(size(data)) ) 
+       allocate( idata(size(data)) )
        where( data )
           idata = 1
        elsewhere
@@ -1481,6 +1511,7 @@ contains
 #elif ({ITYPE}==TYPEDOUBLE)
        call pio_write_darray(ncid, vardesc, iodesc_plus%iodesc, data, status, fillval=spval)
 #endif
+       if(debug > 1) print *,__FILE__,__LINE__
     else
 
        if (masterproc) then
@@ -1499,7 +1530,7 @@ contains
        flag, ncid, nt, readvar, switchdim, cnvrtnan2fill)
     !
     ! !DESCRIPTION:
-    ! Netcdf i/o of 2d 
+    ! Netcdf i/o of 2d
     !
     ! !ARGUMENTS:
     class(file_desc_t), intent(inout) :: ncid         ! netcdf file id
@@ -1514,20 +1545,20 @@ contains
     logical, optional, intent(in)  :: cnvrtnan2fill   ! true => convert any NaN's to _FillValue (spval)
     !
     ! !LOCAL VARIABLES:
-#if ({ITYPE}==TYPEINT) 
+#if ({ITYPE}==TYPEINT)
     integer , pointer :: temp(:,:)
 #else
     real(r8), pointer :: temp(:,:)
 #endif
-    integer           :: ndim1,ndim2       
+    integer           :: ndim1,ndim2
     character(len=8)  :: clmlevel   ! clmlevel
-    character(len=32) :: dimname    ! temporary      
+    character(len=32) :: dimname    ! temporary
     integer           :: status     ! error status
     integer           :: ndims      ! ndims total for var
     integer           :: ndims_iod  ! ndims iodesc for var
     integer           :: varid      ! varid
     integer           :: n,i,j      ! indices
-    integer           :: dims(4)    ! dim sizes       
+    integer           :: dims(4)    ! dim sizes
     integer           :: dids(4)    ! dim ids
     integer           :: iodnum     ! iodesc num in list
     integer           :: start(4)   ! netcdf start index
@@ -1543,13 +1574,13 @@ contains
     start(:)=0
     count(:)=0
 
-    clmlevel = dim1name      
+    clmlevel = dim1name
 
     if (masterproc .and. debug > 1) then
        write(iulog,*) trim(subname),' ',trim(flag),' ',trim(varname),' ',trim(clmlevel)
     end if
 
-#if ({ITYPE}==TYPEDOUBLE) 
+#if ({ITYPE}==TYPEDOUBLE)
     if ( present(cnvrtnan2fill) )then
        if (.not. cnvrtnan2fill) then
           call shr_sys_abort( ' ERROR: cnvrtnan2fill present but NOT set to true -- MUST set it to TRUE if used'//&
@@ -1595,7 +1626,7 @@ contains
                 status = pio_get_var(ncid, vardesc, start(1:n), count(1:n), temp)
                 do j = lb2,ub2
                    do i = lb1,ub1
-                      data(i,j) = temp(j,i) 
+                      data(i,j) = temp(j,i)
                    end do
                 end do
              else
@@ -1632,7 +1663,7 @@ contains
                 call pio_read_darray(ncid, vardesc, iodesc_plus%iodesc, temp, status)
                 do j = lb2,ub2
                 do i = lb1,ub1
-                   data(i,j) = temp(j,i) 
+                   data(i,j) = temp(j,i)
                 end do
                 end do
              else
@@ -1733,7 +1764,7 @@ contains
   subroutine ncd_io_3d_{TYPE}(varname, data, dim1name, flag, ncid, nt, readvar)
     !
     ! !DESCRIPTION:
-    ! Netcdf i/o of 3d 
+    ! Netcdf i/o of 3d
     !
     ! !ARGUMENTS:
     class(file_desc_t), intent(inout) :: ncid         ! netcdf file id
@@ -1745,15 +1776,15 @@ contains
     logical, optional, intent(out) :: readvar         ! true => variable is on initial dataset (read only)
     !
     ! !LOCAL VARIABLES:
-    integer                          :: ndim1,ndim2       
+    integer                          :: ndim1,ndim2
     character(len=8)                 :: clmlevel   ! clmlevel
-    character(len=32)                :: dimname    ! temporary      
+    character(len=32)                :: dimname    ! temporary
     integer                          :: status     ! error status
     integer                          :: ndims      ! ndims total for var
     integer                          :: ndims_iod  ! ndims iodesc for var
     integer                          :: varid      ! varid
-    integer                          :: n          ! index      
-    integer                          :: dims(4)    ! dim sizes       
+    integer                          :: n          ! index
+    integer                          :: dims(4)    ! dim sizes
     integer                          :: dids(4)    ! dim ids
     integer                          :: iodnum     ! iodesc num in list
     integer                          :: start(5)   ! netcdf start index
@@ -1764,7 +1795,7 @@ contains
     character(len=*),parameter :: subname='ncd_io_3d_{TYPE}' ! subroutine name
     !-----------------------------------------------------------------------
 
-    clmlevel = dim1name      
+    clmlevel = dim1name
 
     if (masterproc .and. debug > 1) then
        write(iulog,*) trim(subname),' ',trim(flag),' ',trim(varname),' ',trim(clmlevel)
@@ -1775,11 +1806,11 @@ contains
        call ncd_inqvid(ncid, varname, varid, vardesc, readvar=varpresent)
        if (varpresent) then
           if (single_column) then
-             start(:) = 1 
+             start(:) = 1
              count(:) = 1
              call scam_field_offsets(ncid, clmlevel, vardesc, start, count)
              if (trim(clmlevel) == grlnd) then
-                count(3) = size(data,dim=2); 
+                count(3) = size(data,dim=2);
                 count(4) = size(data,dim=3)
                 n=4
                 if (present(nt)) then
@@ -1867,8 +1898,8 @@ contains
   subroutine scam_field_offsets( ncid, dim1name, vardesc, start, count, &
        found, posNOTonfile)
     !
-    ! !DESCRIPTION: 
-    ! Read/Write initial data from/to netCDF instantaneous initial data file 
+    ! !DESCRIPTION:
+    ! Read/Write initial data from/to netCDF instantaneous initial data file
     !
     ! !USES:
     use clm_varctl,     only: scmlon,scmlat,single_column
@@ -1887,7 +1918,7 @@ contains
     !
     ! !LOCAL VARIABLES:
     integer              :: cc,i,ii           ! index variable
-    integer              :: data_offset       ! offset into land array 1st column 
+    integer              :: data_offset       ! offset into land array 1st column
     integer              :: ndata             ! number of column (or pft points to read)
     real(r8) , pointer   :: cols1dlon(:)      ! holds cols1d_ixy var
     real(r8) , pointer   :: cols1dlat(:)      ! holds cols1d_jxy var
@@ -2064,20 +2095,20 @@ contains
   !------------------------------------------------------------------------
 
   subroutine ncd_getiodesc(ncid, clmlevel, ndims, dims, dimids, &
-       xtype, iodnum, switchdim) 
+       xtype, iodnum, switchdim)
     !
-    ! !DESCRIPTION: 
+    ! !DESCRIPTION:
     ! Returns an index to an io descriptor
     !
     ! !ARGUMENTS:
     class(file_desc_t) , intent(inout) :: ncid       ! PIO file descriptor
     character(len=8)   , intent(in)    :: clmlevel   ! clmlevel
-    integer            , intent(in)    :: ndims      ! ndims for var      
+    integer            , intent(in)    :: ndims      ! ndims for var
     integer            , intent(in)    :: dims(:)    ! dim sizes
     integer            , intent(in)    :: dimids(:)  ! dim ids
     integer            , intent(in)    :: xtype      ! file external type
     integer            , intent(out)   :: iodnum     ! iodesc num in list
-    logical,optional   , intent(in)    :: switchdim  ! switch level dimension and first dim 
+    logical,optional   , intent(in)    :: switchdim  ! switch level dimension and first dim
     !
     ! !LOCAL VARIABLES:
     integer :: k,m,n,cnt                     ! indices
@@ -2105,20 +2136,20 @@ contains
     do while (n <= num_iodesc .and. .not.found)
        if (ndims == iodesc_list(n)%ndims .and. xtype == iodesc_list(n)%type) then
           found = .true.
-          ! First found implies that dimension sizes are the same 
+          ! First found implies that dimension sizes are the same
           do m = 1,ndims
              if (dims(m) /= iodesc_list(n)%dims(m)) then
                 found = .false.
              endif
           enddo
-          ! If found - then also check that dimension names are equal - 
+          ! If found - then also check that dimension names are equal -
           ! dimension ids in iodescriptor are only used to query dimension
           ! names associated with that iodescriptor
           if (found) then
              status = PIO_inquire(ncid, ndimensions=ndims_file)
              do m = 1,ndims
                 status = PIO_inq_dimname(ncid,dimids(m),dimname_file)
-                if (iodesc_list(n)%dimids(m) > ndims_file) then 
+                if (iodesc_list(n)%dimids(m) > ndims_file) then
                    found = .false.
                    exit
                 else
@@ -2144,7 +2175,7 @@ contains
 
     ! Creating a new io descriptor
 
-    if (ndims > 0) then 
+    if (ndims > 0) then
        num_iodesc = num_iodesc + 1
        if (num_iodesc > max_iodesc) then
           write(iulog,*) trim(subname),' ERROR num_iodesc gt max_iodesc ',max_iodesc
@@ -2173,7 +2204,7 @@ contains
     gsmap_lsize = mct_gsmap_lsize(gsmap,mpicom)
     gsmap_gsize = mct_gsmap_gsize(gsmap)
 
-    call mct_gsmap_OP(gsmap,iam,gsmOP)
+    call mct_gsmap_orderedpoints(gsmap,iam,gsmOP)
 
     fullsize = 1
     do n = 1,ndims
@@ -2198,7 +2229,7 @@ contains
              enddo
           enddo
        else
-          write(iulog,*) subname,' ERROR switch dims present must have switchdim true' 
+          write(iulog,*) subname,' ERROR switch dims present must have switchdim true'
           call shr_sys_abort(errMsg(__FILE__, __LINE__))
        end if
     else         ! currently allow for up to two vertical dimensions
@@ -2214,7 +2245,7 @@ contains
              do n = 1,vsize1
                 do m = 1,gsmap_lsize
                    cnt = cnt + 1
-                   compDOF(cnt) = (k-1)*vsize1*gsmap_gsize + (n-1)*gsmap_gsize +  gsmOP(m) 
+                   compDOF(cnt) = (k-1)*vsize1*gsmap_gsize + (n-1)*gsmap_gsize +  gsmOP(m)
                 enddo
              enddo
           end do

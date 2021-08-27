@@ -3,7 +3,7 @@
 ;
 ;  Mark Taylor (converted for use by CLM mkmapdata by Erik Kluzek)
 ;  Sep/01/2011
-;  $Id: rmdups.ncl 47629 2013-05-31 08:59:50Z erik $
+;  $Id$
 ;  $HeadURL;
 ;
 load "$NCARG_NCARG/nclscripts/csm/gsn_code.ncl"
@@ -118,8 +118,8 @@ begin
     nco@history = nco@history + " Removed duplicate weights from mapping file with: rmdups.ncl "
     nco@rmdups_Logname       = logname;
     nco@rmdups_mod_date      = ldate;
-    nco@rmdups_version       = "$HeadURL: https://svn-ccsm-models.cgd.ucar.edu/clm2/branch_tags/geotrace_erik_tags/geotrace_erik_n07_geotrace_40_clm4_5_1_r104/models/lnd/clm/tools/shared/mkmapdata/rmdups.ncl $";
-    nco@rmdups_revision_id   = "$Id: rmdups.ncl 47629 2013-05-31 08:59:50Z erik $";
+    nco@rmdups_version       = "$HeadURL$";
+    nco@rmdups_revision_id   = "$Id$";
 
     print("Successfully removed duplicate weights from mapping file" );
 

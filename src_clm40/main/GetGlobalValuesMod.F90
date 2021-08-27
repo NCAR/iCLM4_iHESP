@@ -29,7 +29,7 @@ contains
     use shr_log_mod, only: errMsg => shr_log_errMsg
     use mct_mod
     !
-    ! Arguments 
+    ! Arguments
     integer          , intent(in) :: decomp_index
     character(len=*) , intent(in) :: clmlevel
     !
@@ -56,7 +56,7 @@ contains
     end if
 
     call get_clmlevel_gsmap(clmlevel=trim(clmlevel), gsmap=gsmap)
-    call mct_gsmap_op(gsmap, iam, gsmap_ordered)
+    call mct_gsmap_orderedpoints(gsmap, iam, gsmap_ordered)
     GetGlobalIndex = gsmap_ordered(decomp_index - beg_index + 1)
     deallocate(gsmap_ordered)
 
@@ -69,7 +69,7 @@ contains
     ! Description:
     ! Write global index information for input local indices
     !
-    use clmtype           
+    use clmtype
     use shr_sys_mod , only: shr_sys_flush
     use shr_sys_mod , only: shr_sys_abort
     use shr_log_mod , only: errMsg => shr_log_errMsg
@@ -80,7 +80,7 @@ contains
     character(len=*) , intent(in) :: clmlevel
     !
     ! Local Variables:
-    integer :: igrc, ilun, icol, ipft 
+    integer :: igrc, ilun, icol, ipft
     !-----------------------------------------------------------------------
 
     if (trim(clmlevel) == nameg) then
@@ -115,7 +115,7 @@ contains
        write(iulog,*)'gridcell latitude     = ',grc%latdeg(igrc)
        write(iulog,*)'column   type         = ',col%itype(icol)
        write(iulog,*)'landunit type         = ',lun%itype(ilun)
-   
+
     else if (trim(clmlevel) == namep) then
 
        ipft = decomp_index
@@ -133,7 +133,7 @@ contains
        write(iulog,*)'column   type         = ',col%itype(icol)
        write(iulog,*)'landunit type         = ',lun%itype(ilun)
 
-    else		       
+    else
        call shr_sys_abort('clmlevel '//trim(clmlevel)//'not supported '//errmsg(__FILE__, __LINE__))
 
     end if

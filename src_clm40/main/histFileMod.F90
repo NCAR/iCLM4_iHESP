@@ -1695,6 +1695,7 @@ contains
     integer :: numl                ! total number of landunits across all processors
     integer :: numg                ! total number of gridcells across all processors
     integer :: numa                ! total number of atm cells across all processors
+    logical :: avoid_pnetcdf       ! whether we should avoid using pnetcdf
     logical :: lhistrest           ! local history restart flag
     type(file_desc_t) :: lnfid     ! local file id
     character(len=  8) :: curdate  ! current date
@@ -1720,6 +1721,17 @@ contains
 
     ncprec = tape(t)%ncprec
 
+    ! BUG(wjs, 2014-10-20, bugz 1730) Workaround for
+    ! http://bugs.cgd.ucar.edu/show_bug.cgi?id=1730
+    ! - 1-d hist files have problems with pnetcdf. A better workaround in terms of
+    ! performance is to keep pnetcdf, but set PIO_BUFFER_SIZE_LIMIT=0, but that can't be
+    ! done on a per-file basis.
+    if (.not. tape(t)%dov2xy) then
+       avoid_pnetcdf = .true.
+    else
+       avoid_pnetcdf = .false.
+    end if
+
     ! Create new netCDF file. It will be in define mode
 
     if ( .not. lhistrest )then
@@ -1728,7 +1740,7 @@ contains
                                       trim(locfnh(t))
           call shr_sys_flush(iulog)
        end if
-       call ncd_pio_createfile(lnfid, trim(locfnh(t)))
+       call ncd_pio_createfile(lnfid, trim(locfnh(t)), avoid_pnetcdf=avoid_pnetcdf)
        call ncd_putatt(lnfid, ncd_global, 'title', 'CLM History file information' )
        call ncd_putatt(lnfid, ncd_global, 'comment', &
           "NOTE: None of the variables are weighted by land fraction!" )
@@ -1738,7 +1750,7 @@ contains
                                       trim(locfnhr(t))
           call shr_sys_flush(iulog)
        end if
-       call ncd_pio_createfile(lnfid, trim(locfnhr(t)))
+       call ncd_pio_createfile(lnfid, trim(locfnhr(t)), avoid_pnetcdf=avoid_pnetcdf)
        call ncd_putatt(lnfid, ncd_global, 'title', &
           'CLM Restart History information, required to continue a simulation' )
        call ncd_putatt(lnfid, ncd_global, 'comment', &
@@ -2895,7 +2907,9 @@ contains
           endif
 
           ! Write time constant history variables
-          call htape_timeconst(t, mode='write')
+          if (tape(t)%ntimes == 1) then
+             call htape_timeconst(t, mode='write')
+          endif
 
           ! Write 3D time constant history variables only to first primary tape
           if ( do_3Dtconst .and. t == 1 .and. tape(t)%ntimes == 1 )then
