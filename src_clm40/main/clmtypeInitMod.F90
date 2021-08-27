@@ -2531,7 +2531,7 @@ contains
 ! Initialize pft VOC flux variables
 !
     use clm_varcon, only : spval
-    use shr_megan_mod, only: shr_megan_megcomps_n
+    use shr_megan_mod, only: shr_megan_megcomps_n, shr_megan_mechcomps_n
 ! !ARGUMENTS:
     implicit none
     integer, intent(in) :: beg, end
@@ -2546,10 +2546,10 @@ contains
 !EOP
 !------------------------------------------------------------------------
 
-    if (shr_megan_megcomps_n<1) return
+    if (shr_megan_mechcomps_n<1) return
 
     allocate(pvf%vocflx_tot(beg:end))
-    allocate(pvf%vocflx(beg:end,1:shr_megan_megcomps_n))
+    allocate(pvf%vocflx(beg:end,1:shr_megan_mechcomps_n))
     allocate(pvf%Eopt_out(beg:end))
     allocate(pvf%topt_out(beg:end))
     allocate(pvf%alpha_out(beg:end))
@@ -2569,7 +2569,7 @@ contains
     allocate(pvf%gammaC_out(beg:end))
 
     pvf%vocflx_tot(beg:end) = nan
-    pvf%vocflx(beg:end,1:shr_megan_megcomps_n) = nan
+    pvf%vocflx(beg:end,1:shr_megan_mechcomps_n) = nan
     pvf%Eopt_out(beg:end) = nan
     pvf%topt_out(beg:end) = nan
     pvf%alpha_out(beg:end) = nan

@@ -34,10 +34,9 @@ else { $cfgdir = $cwd; }
 
 #-----------------------------------------------------------------------------------------------
 # Add $cfgdir to the list of paths that Perl searches for modules
-my @dirs = ( $cfgdir, "$cfgdir/perl5lib",
-             "$cfgdir/../../../../scripts/ccsm_utils/Tools/perl5lib",
-             "$cfgdir/../../../../models/utils/perl5lib",
-           );
+my @dirs = ( "$cfgdir",
+             "$cfgdir/../cime/utils/perl5lib", 
+             "$cfgdir/../../../cime/utils/perl5lib" );
 unshift @INC, @dirs;
 my $result = eval "require XML::Lite";
 if ( ! defined($result) ) {
@@ -63,7 +62,7 @@ SYNOPSIS
 OPTIONS
      -config "file"                       CLM build configuration file created by configure.
      -cesm                                CESM mode set csmdata to \$DIN_LOC_ROOT.
-     -usrname "name"                      Dataset resolution/descriptor for personal datasets.  
+     -usrname "name"                      Dataset resolution/descriptor for personal datasets.
                                           Default : not used
                                           Example: 1x1pt_boulderCO to describe location,
                                           number of pts
@@ -82,7 +81,7 @@ OPTIONS
      -res  "resolution"                   Resolution to use for files. Use "-res list" to
                                           list all valid resolutions. Use "-res any" to
                                           use any valid resolution.
-     -silent [or -s]                      Don't do any extra printing.
+     -silent [or -s]                      Do not do any extra printing.
      -test   [or -t]                      Test that files exists.
 EXAMPLES
 
@@ -110,13 +109,13 @@ EOF
 
 #-----------------------------------------------------------------------------------------------
 
-  my %opts = ( 
+  my %opts = (
                namelist   => $namelist,
                model      => "clm4_5",
                var        => undef,
                hgrid      => undef,
                config     => undef,
-               cesm       => undef, 
+               cesm       => undef,
                csmdata    => undef,
                demand     => undef,
                test       => undef,
@@ -181,12 +180,10 @@ EOF
   }
   # List of input options
   my %inputopts;
-  my $datmblddir             = "$cfgdir/../../../../models/atm/datm/bld";
-  my $drvblddir              = "$cfgdir/../../../../models/drv/bld";
+  # This namelist files under the cime directories are in version 2 format and can't be read by perl code EBK 11/15/2016
   my $model                  = $opts{'model'};
-  my @nl_definition_files    = ( "$datmblddir/namelist_files/namelist_definition_datm.xml",
-                                 "$drvblddir/namelist_files/namelist_definition_drv.xml",
-                                 "$cfgdir/namelist_files/namelist_definition_$model.xml" 
+  my @nl_definition_files    = ("$cfgdir/namelist_files/namelist_definition_drv.xml",
+                                "$cfgdir/namelist_files/namelist_definition_$model.xml"
                                );
   $inputopts{empty_cfg_file} = "$cfgdir/config_files/config_definition_$model.xml";
   $inputopts{nldef_files}    = \@nl_definition_files;
@@ -252,11 +249,10 @@ EOF
      $settings{'notest'}       = ! $opts{'test'};
      $settings{'csmdata'}      = $inputopts{csmdata};
   } else {
-     my @files = ( "$cfgdir/namelist_files/namelist_defaults_${model}.xml", 
-                   "$cfgdir/namelist_files/namelist_defaults_${model}_tools.xml", 
-                   "$drvblddir/namelist_files/namelist_defaults_drv.xml",
+     my @files = ( "$cfgdir/namelist_files/namelist_defaults_${model}.xml",
+                   "$cfgdir/namelist_files/namelist_defaults_${model}_tools.xml",
+                   "$cfgdir/namelist_files/namelist_defaults_drv.xml",
                    "$cfgdir/namelist_files/namelist_defaults_drydep.xml",
-                   "$datmblddir/namelist_files/namelist_defaults_datm.xml",
                  );
      push( @nl_defaults_files, @files );
   }

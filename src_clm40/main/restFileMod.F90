@@ -605,7 +605,7 @@ contains
     call ncd_putatt(ncid, NCD_GLOBAL, 'host'    , trim(hostname))
     call ncd_putatt(ncid, NCD_GLOBAL, 'version' , trim(version))
     call ncd_putatt(ncid, NCD_GLOBAL, 'source'  , trim(source))
-    str = '$Id: restFileMod.F90 62967 2014-08-25 01:41:36Z mvertens $'
+    str = '$Id$'
     call ncd_putatt(ncid, NCD_GLOBAL, 'revision_id'    , trim(str))
     call ncd_putatt(ncid, NCD_GLOBAL, 'case_title'     , trim(ctitle))
     call ncd_putatt(ncid, NCD_GLOBAL, 'case_id'        , trim(caseid))

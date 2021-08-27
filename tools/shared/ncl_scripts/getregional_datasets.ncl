@@ -4,7 +4,7 @@
 ;
 ;  Erik Kluzek
 ;  Aug/28/2009
-;  $Id: getregional_datasets.ncl 65547 2014-11-18 20:34:35Z erik $
+;  $Id$
 ;  $HeadURL;
 ;
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl";

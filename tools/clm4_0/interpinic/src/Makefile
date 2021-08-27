@@ -1,6 +1,6 @@
 # Makefile for interpinic
 
-EXENAME = ../interpinic_cheyenne
+EXENAME = ../interpinic
 
 # Set shared memory to off by default
 ifeq ($(SMP),$(null))

@@ -60,6 +60,7 @@ contains
     use clm_time_manager, only : is_first_step
     use SNICARMod       , only : snw_rds_min
     use shr_infnan_mod  , only : shr_infnan_isnan
+    use clm_time_manager, only : is_restart
     use HydrologyTracer , only : pwtrc, wtrcnam, hydro_tracer, get_wratio, &
                                  h2otiny, ixbase, Rstnd, cdbg, pdbg, mdbg
 !
@@ -2086,6 +2087,22 @@ contains
        end if
     end if
 
+   ! column irrigation variable - irrig_rate
+
+    if (flag == 'define') then
+       call ncd_defvar(ncid=ncid, varname='irrig_rate', xtype=ncd_double,  &
+            dim1name='column', &
+            long_name='irrigation rate', units='mm/s')
+    else if (flag == 'read' .or. flag == 'write') then
+       call ncd_io(varname='irrig_rate', data=cps%irrig_rate, &
+            dim1name=namec, &
+            ncid=ncid, flag=flag, readvar=readvar)
+       if (flag=='read' .and. .not. readvar) then
+          if (is_restart()) call endrun()
+          cps%irrig_rate = 0.0_r8
+       end if
+    end if
+
     ! ------------------------------------------------------------
     ! Determine volumetric soil water (for read only)
     ! ------------------------------------------------------------
@@ -2572,40 +2589,6 @@ contains
 
 
   end subroutine BiogeophysRest
-
-!-----------------------------------------------------------------------
-!BOP
-!
-! !IROUTINE: is_restart
-!
-! !INTERFACE:
-  logical function is_restart( )
-!
-! !DESCRIPTION:
-! Determine if restart run
-!
-! !USES:
-    use clm_varctl, only : nsrest
-!
-! !ARGUMENTS:
-    implicit none
-!
-! !CALLED FROM:
-! subroutine initialize in this module
-!
-! !REVISION HISTORY:
-! Created by Mariana Vertenstein
-!
-!EOP
-!-----------------------------------------------------------------------
-
-    if (nsrest == 1) then
-       is_restart = .true.
-    else
-       is_restart = .false.
-    end if
-
-  end function is_restart
 
 !-----------------------------------------------------------------------
 !BOP

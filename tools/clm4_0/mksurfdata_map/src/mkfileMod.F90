@@ -93,11 +93,11 @@ contains
          'Source', len_trim(str), trim(str)), subname)
 
     str = &
-'$HeadURL: https://svn-ccsm-models.cgd.ucar.edu/clm2/branch_tags/geotrace_erik_tags/geotrace_erik_n07_geotrace_40_clm4_5_1_r104/models/lnd/clm/tools/clm4_0/mksurfdata_map/src/mkfileMod.F90 $'
+'$HeadURL$'
     call check_ret(nf_put_att_text (ncid, NF_GLOBAL, &
          'Version', len_trim(str), trim(str)), subname)
 
-    str = '$Id: mkfileMod.F90 43810 2013-02-07 06:12:57Z erik $'
+    str = '$Id$'
     call check_ret(nf_put_att_text (ncid, NF_GLOBAL, &
          'Revision_Id', len_trim(str), trim(str)), subname)
 

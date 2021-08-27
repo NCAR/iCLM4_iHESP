@@ -189,7 +189,8 @@ module ncdio_pio
   integer , parameter  , public  :: max_string_len = 256     ! length of strings
   real(r8), parameter  , public  :: fillvalue = 1.e36_r8     ! fill value for netcdf fields
 
-  integer, public :: io_type
+  integer, public  :: io_type
+  integer, private ::  io_format
 
   type(iosystem_desc_t), pointer, public  :: pio_subsystem
 
@@ -223,6 +224,7 @@ contains
 
     PIO_subsystem => shr_pio_getiosys(inst_name)
     io_type       =  shr_pio_getiotype(inst_name)
+    io_format     =  shr_pio_getioformat(inst_name)
 
 # 171 "ncdio_pio.F90.in"
   end subroutine ncd_pio_init
@@ -240,10 +242,11 @@ contains
     integer            , intent(in)    :: mode   ! file mode
     !
     ! !LOCAL VARIABLES:
+    integer :: lmode
     integer :: ierr
     !-----------------------------------------------------------------------
-
-    ierr = pio_openfile(pio_subsystem, file, io_type, fname, mode)
+    lmode = ior(mode, io_format)
+    ierr = pio_openfile(pio_subsystem, file, io_type, fname, lmode)
 
     if(ierr/= PIO_NOERR) then
        call shr_sys_abort('ncd_pio_openfile ERROR: Failed to open file')

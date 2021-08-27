@@ -7,7 +7,7 @@
 ;
 ;  Erik Kluzek
 ;  Mar/03/2010
-;  $Id: getco2_historical.ncl 46863 2013-05-08 03:25:21Z sacks $
+;  $Id$
 ;  $HeadURL;
 ;
 begin
@@ -109,8 +109,8 @@ begin
    fileattdef ( nco, ncg );
    nco@history  = ldate+": Convert by getco2_historical.ncl";
    nco@source   = "Convert from:"+ghgfile;
-   nco@Version  = "$HeadURL: https://svn-ccsm-models.cgd.ucar.edu/clm2/branch_tags/geotrace_erik_tags/geotrace_erik_n07_geotrace_40_clm4_5_1_r104/models/lnd/clm/tools/shared/ncl_scripts/getco2_historical.ncl $";
-   nco@Revision = "$Id: getco2_historical.ncl 46863 2013-05-08 03:25:21Z sacks $";
+   nco@Version  = "$HeadURL$";
+   nco@Revision = "$Id$";
    ;
    ; Set static variables
    ;
