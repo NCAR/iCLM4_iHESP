@@ -849,17 +849,18 @@ call get_proc_bounds(begg, endg, begl, endl, begc, endc, begp, endp)
          avgflag='A', long_name='ice dynamic land cover change conversion runoff flux', &                                   
          ptr_lnd=gwf%qflx_ice_dynbal)
 
-    do m=1,pwtrc
-      ptr1d => gwf%wtr_qflx_liq_dynbal(:,m)
-      call hist_addfld1d (fname='QFLX_LIQ_DYNBAL_'//trim(wtrcnam(m)), units='mm/s',  &    
-           avgflag='A', long_name=trim(wtrcnam(m))//' liq dynamic land cover change conversion runoff flux', &     
-           ptr_lnd=ptr1d)     
+   ! These variables may go out of range of single precision float
+   !do m=1,pwtrc
+   !  ptr1d => gwf%wtr_qflx_liq_dynbal(:,m)
+   !  call hist_addfld1d (fname='QFLX_LIQ_DYNBAL_'//trim(wtrcnam(m)), units='mm/s',  &    
+   !       avgflag='A', long_name=trim(wtrcnam(m))//' liq dynamic land cover change conversion runoff flux', &     
+   !       ptr_lnd=ptr1d)     
 
-      ptr1d => gwf%wtr_qflx_ice_dynbal(:,m)
-      call hist_addfld1d (fname='QFLX_ICE_DYNBAL_'//trim(wtrcnam(m)), units='mm/s',  &
-           avgflag='A', long_name=trim(wtrcnam(m))//' ice dynamic land cover change conversion runoff flux', &                                       
-           ptr_lnd=ptr1d)
-    end do
+   !  ptr1d => gwf%wtr_qflx_ice_dynbal(:,m)
+   !  call hist_addfld1d (fname='QFLX_ICE_DYNBAL_'//trim(wtrcnam(m)), units='mm/s',  &
+   !       avgflag='A', long_name=trim(wtrcnam(m))//' ice dynamic land cover change conversion runoff flux', &                                       
+   !       ptr_lnd=ptr1d)
+   !end do
 
     call hist_addfld1d (fname='QRUNOFF_U', units='mm/s',  &
          avgflag='A', long_name='Urban total runoff', &

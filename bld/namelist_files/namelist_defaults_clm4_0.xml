@@ -336,10 +336,14 @@ lnd/clm2/surfdata_map/surfdata_ne4np4_simyr2000_c120126.nc</fsurdat>
 lnd/clm2/surfdata_map/surfdata_ne16np4_simyr2000_c120126.nc</fsurdat>
 <fsurdat hgrid="ne30np4" sim_year="2000" irrig=".false.">
 lnd/clm2/surfdata_map/surfdata_ne30np4_simyr2000_c110801.nc</fsurdat>
+<fsurdat hgrid="ne30pg3" sim_year="1850" use_crop=".false." irrigate=".true.">
+lnd/clm2/surfdata_map/surfdata_ne30pg3_hist_16pfts_Irrig_CMIP6_simyr1850_c190228.nc</fsurdat>
 <fsurdat hgrid="ne60np4" sim_year="2000" irrig=".false.">
 lnd/clm2/surfdata_map/surfdata_ne60np4_simyr2000_c120416.nc</fsurdat>
 <fsurdat hgrid="ne120np4" sim_year="2000" irrig=".false.">
 lnd/clm2/surfdata_map/surfdata_ne120np4_simyr2000_c130313.nc</fsurdat>
+<fsurdat hgrid="ne120np4.pg3" sim_year="1850" use_crop=".false." irrigate=".true.">
+lnd/clm2/surfdata_map/surfdata_ne120np4.pg3_hist_16pfts_Irrig_CMIP6_simyr1850_c190814.nc</fsurdat>
 <fsurdat hgrid="ne240np4" sim_year="2000" irrig=".false.">
 lnd/clm2/surfdata_map/surfdata_ne240np4_simyr2000_c130313.nc</fsurdat>
 
