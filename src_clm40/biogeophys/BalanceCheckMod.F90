@@ -1,4 +1,3 @@
-
 module BalanceCheckMod
 
 !-----------------------------------------------------------------------
@@ -813,9 +812,9 @@ endif
           write(iulog,*) 'QFLX_DRAIN   ', qflx_drain(c)   *dtime, wtr_qflx_drain(c,m)   *dtime
           write(iulog,*) 'FORC_RAIN    ', forc_rain_col(c)*dtime, forc_wtr_rain_col(c,m)*dtime
           write(iulog,*) 'FORC_SNOW    ', forc_snow_col(c)*dtime, forc_wtr_snow_col(c,m)*dtime
- 
-          write(iulog,*)'clm model is stopping'
-          call endrun()
+! isotope model ignores this error 
+!          write(iulog,*)'clm model is stopping'
+!          call endrun()
         end if
       end if
     end do
