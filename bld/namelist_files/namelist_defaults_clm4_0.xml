@@ -120,13 +120,13 @@ irrig=".false." crop="off" lnd_tuning_mode="clm4_0_CRUv7"  hydro_tracer=".false.
 <finidat hgrid="1.9x2.5" maxpft="17" mask="gx1v6" bgc="none" ic_ymd="20000101" ic_tod="0" sim_year="2000" glc_nec="0" irrig=".true." crop="off"  hydro_tracer=".false.">lnd/clm2/initdata/clmi.IQirrcr_2000-01-01_1.9x2.5_gx1v6_c101115.nc
 </finidat>
 
-<finidat hgrid="1.9x2.5" maxpft="17" mask="gx1v6" bgc="none" ic_ymd="04010101" ic_tod="0" sim_year="1850" glc_nec="0" irrig=".false." crop="off" hydro_tracer=".false.">ccsm4_init/b40.1850.track1.2deg.003/year_401/b40.1850.track1.2deg.003.clm2.r.0401-01-01-00000.nc
+<finidat hgrid="1.9x2.5" maxpft="17" mask="gx1v6" bgc="none" ic_ymd="04010101" ic_tod="0" sim_year="1850" glc_nec="0" irrig=".false." crop="off" hydro_tracer=".false.">lnd/clm2/initdata/b.e13.isotope.f19_g16.clm2.r.0505-01-01-00000.nc
 </finidat>
 
-<finidat hgrid="1.9x2.5" maxpft="17" mask="gx1v6" bgc="cn" ic_ymd="04010101" ic_tod="0" sim_year="1850" glc_nec="0" irrig=".false." crop="off"  hydro_tracer=".false.">ccsm4_init/b40.1850.track1.2deg.003/year_401/b40.1850.track1.2deg.003.clm2.r.0401-01-01-00000.nc
+<finidat hgrid="1.9x2.5" maxpft="17" mask="gx1v6" bgc="cn" ic_ymd="04010101" ic_tod="0" sim_year="1850" glc_nec="0" irrig=".false." crop="off"  hydro_tracer=".false.">lnd/clm2/initdata/b.e13.isotope.f19_g16.clm2.r.0505-01-01-00000.nc
 </finidat>
 
-<finidat hgrid="1.9x2.5" maxpft="17" mask="gx1v6" bgc="cndv" ic_ymd="04010101" ic_tod="0" sim_year="1850" glc_nec="0" irrig=".false." crop="off" hydro_tracer=".false.">ccsm4_init/b40.1850.track1.2deg.003/year_401/b40.1850.track1.2deg.003.clm2.r.0401-01-01-00000.nc
+<finidat hgrid="1.9x2.5" maxpft="17" mask="gx1v6" bgc="cndv" ic_ymd="04010101" ic_tod="0" sim_year="1850" glc_nec="0" irrig=".false." crop="off" hydro_tracer=".false.">lnd/clm2/initdata/b.e13.isotope.f19_g16.clm2.r.0505-01-01-00000.nc
 </finidat>
 
 <finidat hgrid="1.9x2.5" maxpft="17" mask="gx1v6" bgc="cndv" ic_ymd="02010101" ic_tod="0" sim_year="2000" glc_nec="0" irrig=".false." crop="off" hydro_tracer=".false.">lnd/clm2/initdata/clmi.IQCNDV.0201-01-01_1.9x2.5_gx1v6_simyr2000_c100316.nc

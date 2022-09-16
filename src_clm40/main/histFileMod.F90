@@ -1740,7 +1740,8 @@ contains
                                       trim(locfnh(t))
           call shr_sys_flush(iulog)
        end if
-       call ncd_pio_createfile(lnfid, trim(locfnh(t)), avoid_pnetcdf=avoid_pnetcdf)
+       call ncd_pio_createfile(lnfid, trim(locfnh(t)))
+!       call ncd_pio_createfile(lnfid, trim(locfnh(t)), avoid_pnetcdf=avoid_pnetcdf)
        call ncd_putatt(lnfid, ncd_global, 'title', 'CLM History file information' )
        call ncd_putatt(lnfid, ncd_global, 'comment', &
           "NOTE: None of the variables are weighted by land fraction!" )
@@ -1750,7 +1751,8 @@ contains
                                       trim(locfnhr(t))
           call shr_sys_flush(iulog)
        end if
-       call ncd_pio_createfile(lnfid, trim(locfnhr(t)), avoid_pnetcdf=avoid_pnetcdf)
+!       call ncd_pio_createfile(lnfid, trim(locfnhr(t)), avoid_pnetcdf=avoid_pnetcdf)
+       call ncd_pio_createfile(lnfid, trim(locfnhr(t)))
        call ncd_putatt(lnfid, ncd_global, 'title', &
           'CLM Restart History information, required to continue a simulation' )
        call ncd_putatt(lnfid, ncd_global, 'comment', &
@@ -2960,7 +2962,7 @@ contains
                      trim(locfnh(t)),' at nstep = ', get_nstep()
                 write(iulog,*)
              endif
-	     call ncd_pio_closefile(nfid(t))
+             call ncd_pio_closefile(nfid(t))
              if (.not.if_stop .and. (tape(t)%ntimes/=tape(t)%mfilt)) then
                 call ncd_pio_openfile (nfid(t), trim(locfnh(t)), ncd_write)
              end if
@@ -4442,7 +4444,7 @@ end function max_nFields
 
   subroutine strip_null(str)
     character(len=*), intent(inout) :: str
-    integer :: i	
+    integer :: i        
     do i=1,len(str)
        if(ichar(str(i:i))==0) str(i:i)=' '
     end do
@@ -4475,7 +4477,7 @@ end function max_nFields
     logical, intent(out) :: if_stop             !true => last time step of run
     logical, intent(out) :: if_disphist(ntapes) !true => save and dispose history file
     logical, intent(in)  :: rstwr
-    logical, intent(in)  :: nlend	
+    logical, intent(in)  :: nlend       
     !
 ! !REVISION HISTORY:
 ! Created by Mariana Vertenstein
