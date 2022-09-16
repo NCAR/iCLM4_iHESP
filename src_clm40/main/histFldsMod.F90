@@ -1112,7 +1112,7 @@ call get_proc_bounds(begg, endg, begl, endl, begc, endc, begp, endp)
 
       call hist_addfld1d (fname='FCANEQ', units='fraction',  &
            avgflag='A', long_name='fraction equilibration in canopy', &
-         ptr_pft=pps%fcaneq, set_lake=spval)
+           ptr_pft=pps%fcaneq, set_lake=spval, default='inactive')
 
       call hist_addfld1d (fname='FSOIEQ', units='fraction',  &
            avgflag='A', long_name='fraction equilibration in top soil layer', &
