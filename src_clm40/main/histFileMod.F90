@@ -2909,9 +2909,11 @@ contains
           endif
 
           ! Write time constant history variables
-          if (tape(t)%ntimes == 1) then
-             call htape_timeconst(t, mode='write')
-          endif
+          ! Remove if/then statement to properly print out time variables (at tape(t)%ntimes > 1) 
+          ! in high frequency CLM history files (macarew)
+          !if (tape(t)%ntimes == 1) then
+          call htape_timeconst(t, mode='write')
+          !endif
 
           ! Write 3D time constant history variables only to first primary tape
           if ( do_3Dtconst .and. t == 1 .and. tape(t)%ntimes == 1 )then
